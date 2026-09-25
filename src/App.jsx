@@ -1,39 +1,80 @@
-import Bienvenida from "./components/Bienvenida";
+App.jsx
+import { useEffect, useState } from "react";
 import Cabecera from "./components/Cabecera";
 import Navegacion from "./components/Navegacion";
-import PiePagina from "./components/PiePagina";
-import TarjetaActividad from "./components/TarjetaActividad";
+import Cartelera from "./pages/Cartelera";
+import MisInscripciones from "./components/MisInscripciones";
+import { actividades } from "./data/actividades";
 
 function App() {
+  const [categoria, setCategoria] = useState("Todas");
+
+  const [inscripciones, setInscripciones] = useState(() => {
+    const guardadas = localStorage.getItem("inscripciones");
+
+    return guardadas ? JSON.parse(guardadas) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem(
+      "inscripciones",
+      JSON.stringify(inscripciones)
+    );
+  }, [inscripciones]);
+
+  const visibles =
+    categoria === "Todas"
+      ? actividades
+      : actividades.filter(
+          (actividad) => actividad.categoria === categoria
+        );
+
+  function inscribir(actividad) {
+    const yaExiste = inscripciones.some(
+      (item) => item.id === actividad.id
+    );
+
+    if (yaExiste) return;
+
+    setInscripciones([...inscripciones, actividad]);
+  }
+
+  function eliminarInscripcion(id) {
+    setInscripciones(
+      inscripciones.filter((item) => item.id !== id)
+    );
+  }
+
   return (
     <>
       <Cabecera />
-
       <Navegacion />
 
       <main className="container py-4">
-        <Bienvenida />
+        <h1 className="mb-4">Cartelera cultural</h1>
 
-        <section id="actividades">
-          <h2 className="mb-4">Actividades</h2>
+        <select
+          className="form-select mb-4"
+          value={categoria}
+          onChange={(evento) => setCategoria(evento.target.value)}
+        >
+          <option>Todas</option>
+          <option>Música</option>
+          <option>Artes visuales</option>
+          <option>Danza</option>
+          <option>Teatro</option>
+        </select>
 
-          <div className="row g-4">
-            <div className="col-12 col-md-6 col-lg-4">
-              <TarjetaActividad />
-            </div>
+        <Cartelera
+          actividades={visibles}
+          onInscribir={inscribir}
+        />
 
-            <div className="col-12 col-md-6 col-lg-4">
-              <TarjetaActividad />
-            </div>
-
-            <div className="col-12 col-md-6 col-lg-4">
-              <TarjetaActividad />
-            </div>
-          </div>
-        </section>
+        <MisInscripciones
+          inscripciones={inscripciones}
+          onEliminar={eliminarInscripcion}
+        />
       </main>
-
-      <PiePagina />
     </>
   );
 }
